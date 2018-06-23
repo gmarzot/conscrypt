@@ -47,6 +47,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import org.conscrypt.ExternalSession.Provider;
 import org.conscrypt.NativeRef.SSL_SESSION;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * Implementation of the class OpenSSLSocketImpl based on OpenSSL.
@@ -1188,5 +1189,23 @@ class ConscryptFileDescriptorSocket extends OpenSSLSocketImpl
 
         // Update the state
         this.state = newState;
+    }
+
+    /** 
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    @Override
+    void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        ssl.setSimpleSessionTicket(
+                                   prev!=null?prev.keyName:null, prev!=null?prev.aesKey:null, prev!=null?prev.hmacKey:null,
+                                   curr!=null?curr.keyName:null, curr!=null?curr.aesKey:null, curr!=null?curr.hmacKey:null,
+                                   next!=null?next.keyName:null, next!=null?next.aesKey:null, next!=null?next.hmacKey:null
+                                   );
     }
 }

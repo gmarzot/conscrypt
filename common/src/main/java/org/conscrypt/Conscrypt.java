@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * Core API for creating and configuring all Conscrypt types.
@@ -646,4 +647,34 @@ public final class Conscrypt {
             int length) throws SSLException {
         return toConscrypt(engine).exportKeyingMaterial(label, context, length);
     }
+
+
+   /** 
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param the engine being configured
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    public static void setSimpleSessionTicket(SSLSocket socket, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        toConscrypt(socket).setSimpleSessionTicket(prev,curr,next);
+    }
+    
+    /**
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param the engine being configured
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    public static void setSimpleSessionTicket(SSLEngine engine, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        toConscrypt(engine).setSimpleSessionTicket(prev,curr,next);
+    }
+
 }

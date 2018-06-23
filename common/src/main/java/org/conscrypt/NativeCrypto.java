@@ -914,6 +914,13 @@ public final class NativeCrypto {
 
     static native byte[] SSL_export_keying_material(long ssl, NativeSsl ssl_holder, byte[] label, byte[] context, int num_bytes) throws SSLException;
 
+    // simplesessionticket
+    static native void SSL_set_simple_session_ticket(long ssl, NativeSsl ssl_holder,
+                                                        byte[] prevKeyName,byte[] prevAesKey,byte[] prevHmacKey,
+                                                        byte[] currKeyName,byte[] currAesKey,byte[] currHmacKey,
+                                                        byte[] nextKeyName,byte[] nextAesKey,byte[] nextHmacKey
+                                                        );
+
     static native void SSL_use_psk_identity_hint(long ssl, NativeSsl ssl_holder, String identityHint) throws SSLException;
 
     static native void set_SSL_psk_client_callback_enabled(long ssl, NativeSsl ssl_holder, boolean enabled);

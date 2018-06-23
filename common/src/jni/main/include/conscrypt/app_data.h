@@ -118,6 +118,23 @@ class AppData {
     size_t applicationProtocolsLength;
     jobject applicationProtocolSelector;
 
+    // simplesessionticket
+    // todo: refactor these into a struct with all 3 fields
+    bool sstPrevKeyActive;
+    unsigned char sstPrevKeyName[16];
+    unsigned char sstPrevAesKey[16];
+    unsigned char sstPrevHmacKey[32];
+    
+    bool sstCurrentKeyActive;
+    unsigned char sstCurrentKeyName[16];
+    unsigned char sstCurrentAesKey[16];
+    unsigned char sstCurrentHmacKey[32];
+    
+    bool sstNextKeyActive;
+    unsigned char sstNextKeyName[16];
+    unsigned char sstNextAesKey[16];
+    unsigned char sstNextHmacKey[32];
+
     /**
      * Creates the application data context for the SSL*.
      */
@@ -162,6 +179,65 @@ class AppData {
         clearCallbackState();
     }
 
+    // simplesessionticket
+    void setSimpleSessionTicket(JNIEnv *e,
+                                jbyteArray prevKeyName,jbyteArray prevAesKey,jbyteArray prevHmacKey,
+                                jbyteArray currentKeyName,jbyteArray currentAesKey,jbyteArray currentHmacKey,
+                                jbyteArray nextKeyName,jbyteArray nextAesKey,jbyteArray nextHmacKey
+                                ) {
+      if(prevKeyName == nullptr) {
+        sstPrevKeyActive = false;
+      } else {
+        jbyte* nameBytes = e->GetByteArrayElements(prevKeyName, nullptr);
+        jbyte* aesKeyBytes = e->GetByteArrayElements(prevAesKey, nullptr);
+        jbyte* hmacKeyBytes = e->GetByteArrayElements(prevHmacKey, nullptr);
+        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
+          sstPrevKeyActive = true;
+          memcpy(sstPrevKeyName,nameBytes,16);
+          memcpy(sstPrevAesKey,aesKeyBytes,16);
+          memcpy(sstPrevHmacKey,hmacKeyBytes,32);
+        } else {
+          JNI_TRACE("appData=%p setSimpleSessionTicket => for prev, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
+          sstPrevKeyActive = false;
+        }
+      }
+
+      if(currentKeyName == nullptr) {
+        sstCurrentKeyActive = false;
+      } else {
+        jbyte* nameBytes = e->GetByteArrayElements(currentKeyName, nullptr);
+        jbyte* aesKeyBytes = e->GetByteArrayElements(currentAesKey, nullptr);
+        jbyte* hmacKeyBytes = e->GetByteArrayElements(currentHmacKey, nullptr);
+        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
+          sstCurrentKeyActive = true;
+          memcpy(sstCurrentKeyName,nameBytes,16);
+          memcpy(sstCurrentAesKey,aesKeyBytes,16);
+          memcpy(sstCurrentHmacKey,hmacKeyBytes,32);
+        } else {
+          JNI_TRACE("appData=%p setSimpleSessionTicket => for current, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
+          sstCurrentKeyActive = false;
+        }
+      }
+
+      if(nextKeyName == nullptr) {
+        sstNextKeyActive = false;
+      } else {
+        jbyte* nameBytes = e->GetByteArrayElements(nextKeyName, nullptr);
+        jbyte* aesKeyBytes = e->GetByteArrayElements(nextAesKey, nullptr);
+        jbyte* hmacKeyBytes = e->GetByteArrayElements(nextHmacKey, nullptr);
+        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
+          sstNextKeyActive = true;
+          memcpy(sstNextKeyName,nameBytes,16);
+          memcpy(sstNextAesKey,aesKeyBytes,16);
+          memcpy(sstNextHmacKey,hmacKeyBytes,32);
+        } else {
+          JNI_TRACE("appData=%p setSimpleSessionTicket => for next, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
+          sstNextKeyActive = false;
+        }
+      }
+
+    }
+    
     /**
      * Only called in server mode. Sets the protocols for ALPN negotiation.
      *
@@ -240,7 +316,12 @@ class AppData {
           sslHandshakeCallbacks(nullptr),
           applicationProtocolsData(nullptr),
           applicationProtocolsLength(static_cast<size_t>(-1)),
-          applicationProtocolSelector(nullptr) {
+          applicationProtocolSelector(nullptr),
+          // simplesessionticket
+          sstPrevKeyActive(false),
+          sstCurrentKeyActive(false),
+          sstNextKeyActive(false)
+    {
 #ifdef _WIN32
         interruptEvent = nullptr;
 #else

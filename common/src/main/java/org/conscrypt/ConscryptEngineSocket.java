@@ -38,6 +38,7 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * Implements crypto handling by delegating to {@link ConscryptEngine}.
@@ -800,5 +801,18 @@ class ConscryptEngineSocket extends OpenSSLSocketImpl {
                 return -1;
             }
         }
+    }
+    /** 
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    @Override
+    void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        engine.setSimpleSessionTicket(prev,curr,next);
     }
 }
