@@ -200,6 +200,9 @@ class AppData {
           JNI_TRACE("appData=%p setSimpleSessionTicket => for prev, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
           sstPrevKeyActive = false;
         }
+        safeReleaseByteArray(e,nameBytes,prevKeyName);
+        safeReleaseByteArray(e,aesKeyBytes,prevAesKey);
+        safeReleaseByteArray(e,hmacKeyBytes,prevHmacKey);
       }
 
       if(currentKeyName == nullptr) {
@@ -217,6 +220,9 @@ class AppData {
           JNI_TRACE("appData=%p setSimpleSessionTicket => for current, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
           sstCurrentKeyActive = false;
         }
+        safeReleaseByteArray(e,nameBytes,currentKeyName);
+        safeReleaseByteArray(e,aesKeyBytes,currentAesKey);
+        safeReleaseByteArray(e,hmacKeyBytes,currentHmacKey);
       }
 
       if(nextKeyName == nullptr) {
@@ -234,6 +240,9 @@ class AppData {
           JNI_TRACE("appData=%p setSimpleSessionTicket => for next, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
           sstNextKeyActive = false;
         }
+        safeReleaseByteArray(e,nameBytes,nextKeyName);
+        safeReleaseByteArray(e,aesKeyBytes,nextAesKey);
+        safeReleaseByteArray(e,hmacKeyBytes,nextHmacKey);
       }
 
     }
@@ -330,6 +339,12 @@ class AppData {
 #endif
     }
 
+    // simplesessionticket
+    void safeReleaseByteArray(JNIEnv *e,jbyte *arr,jbyteArray javaArr) {
+      if(arr != nullptr)
+        e->ReleaseByteArrayElements(javaArr,arr,JNI_ABORT);
+    }
+    
     void clearApplicationProtocols() {
         if (applicationProtocolsData != nullptr) {
             delete applicationProtocolsData;

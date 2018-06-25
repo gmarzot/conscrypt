@@ -7772,10 +7772,6 @@ static void NativeCrypto_SSL_set_simple_session_ticket(JNIEnv* env, jclass, jlon
         SSL_CTX_set_tlsext_ticket_key_cb(SSL_get_SSL_CTX(ssl), nullptr);
         return;
     }
-    FILE *fp = fopen("c:\\temp\\foo.log","a");
-    fprintf(fp,"XXX dec -- using simple session ticket, byte 0s are %d %d %d\n",prevKeyName[0],currentKeyName[0],nextKeyName[0]);
-    fclose(fp);
-
     appData->setSimpleSessionTicket(env,
                                     prevKeyName,prevAesKey,prevHmacKey,
                                     currentKeyName,currentAesKey,currentHmacKey,
