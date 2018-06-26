@@ -458,7 +458,7 @@ final class ConscryptEngine extends AbstractConscryptEngine implements NativeCry
                 return;
             }
             if (isOutboundDone()) {
-                transitionTo(STATE_CLOSED);
+                closeAndFreeResources();
             } else {
                 transitionTo(STATE_CLOSED_INBOUND);
             }
