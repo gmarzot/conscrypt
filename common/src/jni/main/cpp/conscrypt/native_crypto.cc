@@ -7707,38 +7707,34 @@ static int sst_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned
             return -1; /* insufficient random */
         }
 
-        if ( !appData->sstCurrentKeyActive) {
+        if ( !appData->sskCurrent->active) {
             return 0;
         }
-        memcpy(key_name, appData->sstCurrentKeyName, 16);
+        memcpy(key_name, appData->sskCurrent->keyName, 16);
 
-        EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, appData->sstCurrentAesKey, iv);
-        HMAC_Init_ex(hctx, appData->sstCurrentHmacKey, 32, EVP_sha256(), NULL);
+        EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, appData->sskCurrent->aesKey, iv);
+        HMAC_Init_ex(hctx, appData->sskCurrent->hmacKey, 32, EVP_sha256(), NULL);
 
         return 1;
 
     } else { /* retrieve session */
-        unsigned char *aes = nullptr;
-        unsigned char *hmac = nullptr;
+        AppData::SimpleSessionKey *ssk = nullptr;
         bool expired = false;
 
-        if(appData->sstCurrentKeyActive && sst_keyname_matches(key_name,appData->sstCurrentKeyName)) {
-            aes = appData->sstCurrentAesKey;
-            hmac = appData->sstCurrentHmacKey;
-        } else if(appData->sstNextKeyActive && sst_keyname_matches(key_name,appData->sstNextKeyName)) {
-            aes = appData->sstNextAesKey;
-            hmac = appData->sstNextHmacKey;
-        } else if(appData->sstPrevKeyActive && sst_keyname_matches(key_name,appData->sstPrevKeyName)) {
-            aes = appData->sstPrevAesKey;
-            hmac = appData->sstPrevHmacKey;
+        if(appData->sskCurrent->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskCurrent;
+        } else if(appData->sskNext->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskNext;
+        } else if(appData->sskPrevious->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskPrevious;
             expired = true;
         }
 
-        if  (!aes) // no match
+        if  (ssk == nullptr) // no match
             return 0;
 
-        EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, aes, iv );
-        HMAC_Init_ex(hctx, hmac, 32, EVP_sha256(), NULL);
+        EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, ssk->aesKey, iv );
+        HMAC_Init_ex(hctx, ssk->hmacKey, 32, EVP_sha256(), NULL);
 
         if (expired) {
             /* return 2 - this session will get a new ticket even though the current is still valid */
@@ -7772,12 +7768,10 @@ static void NativeCrypto_SSL_set_simple_session_ticket(JNIEnv* env, jclass, jlon
         SSL_CTX_set_tlsext_ticket_key_cb(SSL_get_SSL_CTX(ssl), nullptr);
         return;
     }
-    appData->setSimpleSessionTicket(env,
-                                    prevKeyName,prevAesKey,prevHmacKey,
-                                    currentKeyName,currentAesKey,currentHmacKey,
-                                    nextKeyName,nextAesKey,nextHmacKey
-                                    );
-
+    appData->sskPrevious->set(env,prevKeyName,prevAesKey,prevHmacKey);
+    appData->sskCurrent->set(env,currentKeyName,currentAesKey,currentHmacKey);
+    appData->sskNext->set(env,nextKeyName,nextAesKey,nextHmacKey);
+    
     SSL_CTX_set_tlsext_ticket_key_cb(SSL_get_SSL_CTX(ssl), sst_tlsext_ticket_key_cb);
 }
 

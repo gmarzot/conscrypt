@@ -119,22 +119,36 @@ class AppData {
     jobject applicationProtocolSelector;
 
     // simplesessionticket
-    // todo: refactor these into a struct with all 3 fields
-    bool sstPrevKeyActive;
-    unsigned char sstPrevKeyName[16];
-    unsigned char sstPrevAesKey[16];
-    unsigned char sstPrevHmacKey[32];
-    
-    bool sstCurrentKeyActive;
-    unsigned char sstCurrentKeyName[16];
-    unsigned char sstCurrentAesKey[16];
-    unsigned char sstCurrentHmacKey[32];
-    
-    bool sstNextKeyActive;
-    unsigned char sstNextKeyName[16];
-    unsigned char sstNextAesKey[16];
-    unsigned char sstNextHmacKey[32];
+    class SimpleSessionKey {
+      
+    public:
+      bool active;
+      unsigned char keyName[16];
+      unsigned char aesKey[16];
+      unsigned char hmacKey[32];
 
+      SimpleSessionKey()
+        : active(false) {
+      }
+
+      bool matchesKeyAndActive(unsigned char *candidate) {
+        return active && memcmp(candidate,keyName,16) == 0;
+      }
+
+      void set(JNIEnv *e,jbyteArray keyName,jbyteArray aesKey,jbyteArray hmacKey) {
+        if(keyName == nullptr || aesKey == nullptr || hmacKey == nullptr) {
+          active = false;
+        } else {
+          active = true;
+          e->GetByteArrayRegion(keyName,0,16,(jbyte *)this->keyName);
+          e->GetByteArrayRegion(aesKey,0,16,(jbyte *)this->aesKey);
+          e->GetByteArrayRegion(hmacKey,0,32,(jbyte *)this->hmacKey);
+        }
+      }
+    };
+
+    SimpleSessionKey *sskPrevious,*sskCurrent,*sskNext;
+    
     /**
      * Creates the application data context for the SSL*.
      */
@@ -177,42 +191,13 @@ class AppData {
         clearApplicationProtocols();
         clearApplicationProtocolSelector(env);
         clearCallbackState();
+
+        // simplesessionticket
+        delete sskPrevious;
+        delete sskCurrent;
+        delete sskNext;
     }
 
-    // simplesessionticket
-    void setSimpleSessionTicket(JNIEnv *e,
-                                jbyteArray prevKeyName,jbyteArray prevAesKey,jbyteArray prevHmacKey,
-                                jbyteArray currentKeyName,jbyteArray currentAesKey,jbyteArray currentHmacKey,
-                                jbyteArray nextKeyName,jbyteArray nextAesKey,jbyteArray nextHmacKey
-                                ) {
-      if(prevKeyName == nullptr || prevAesKey == nullptr || prevHmacKey == nullptr) {
-        sstPrevKeyActive = false;
-      } else {
-        sstPrevKeyActive = true;
-        e->GetByteArrayRegion(prevKeyName,0,16,(jbyte *)sstPrevKeyName);
-        e->GetByteArrayRegion(prevAesKey,0,16,(jbyte *)sstPrevAesKey);
-        e->GetByteArrayRegion(prevHmacKey,0,32,(jbyte *)sstPrevHmacKey);
-      }
-
-      if(currentKeyName == nullptr || currentAesKey == nullptr || currentHmacKey == nullptr) {
-        sstCurrentKeyActive = false;
-      } else {
-        sstCurrentKeyActive = true;
-        e->GetByteArrayRegion(currentKeyName,0,16,(jbyte *)sstCurrentKeyName);
-        e->GetByteArrayRegion(currentAesKey,0,16,(jbyte *)sstCurrentAesKey);
-        e->GetByteArrayRegion(currentHmacKey,0,32,(jbyte *)sstCurrentHmacKey);
-      }
-
-      if(nextKeyName == nullptr || nextAesKey == nullptr || nextHmacKey == nullptr) {
-        sstNextKeyActive = false;
-      } else {
-        sstNextKeyActive = true;
-        e->GetByteArrayRegion(nextKeyName,0,16,(jbyte *)sstNextKeyName);
-        e->GetByteArrayRegion(nextAesKey,0,16,(jbyte *)sstNextAesKey);
-        e->GetByteArrayRegion(nextHmacKey,0,32,(jbyte *)sstNextHmacKey);
-      }
-
-    }
     
     /**
      * Only called in server mode. Sets the protocols for ALPN negotiation.
@@ -283,7 +268,7 @@ class AppData {
         sslHandshakeCallbacks = nullptr;
         env = nullptr;
     }
-
+    
  private:
     AppData()
         : aliveAndKicking(true),
@@ -292,18 +277,16 @@ class AppData {
           sslHandshakeCallbacks(nullptr),
           applicationProtocolsData(nullptr),
           applicationProtocolsLength(static_cast<size_t>(-1)),
-          applicationProtocolSelector(nullptr),
-          // simplesessionticket
-          sstPrevKeyActive(false),
-          sstCurrentKeyActive(false),
-          sstNextKeyActive(false)
-    {
+          applicationProtocolSelector(nullptr) {
 #ifdef _WIN32
         interruptEvent = nullptr;
 #else
         fdsEmergency[0] = -1;
         fdsEmergency[1] = -1;
 #endif
+        sskPrevious = new SimpleSessionKey();
+        sskCurrent = new SimpleSessionKey();
+        sskNext = new SimpleSessionKey();
     }
 
     void clearApplicationProtocols() {
