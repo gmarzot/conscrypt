@@ -185,64 +185,31 @@ class AppData {
                                 jbyteArray currentKeyName,jbyteArray currentAesKey,jbyteArray currentHmacKey,
                                 jbyteArray nextKeyName,jbyteArray nextAesKey,jbyteArray nextHmacKey
                                 ) {
-      if(prevKeyName == nullptr) {
+      if(prevKeyName == nullptr || prevAesKey == nullptr || prevHmacKey == nullptr) {
         sstPrevKeyActive = false;
       } else {
-        jbyte* nameBytes = e->GetByteArrayElements(prevKeyName, nullptr);
-        jbyte* aesKeyBytes = e->GetByteArrayElements(prevAesKey, nullptr);
-        jbyte* hmacKeyBytes = e->GetByteArrayElements(prevHmacKey, nullptr);
-        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
-          sstPrevKeyActive = true;
-          memcpy(sstPrevKeyName,nameBytes,16);
-          memcpy(sstPrevAesKey,aesKeyBytes,16);
-          memcpy(sstPrevHmacKey,hmacKeyBytes,32);
-        } else {
-          JNI_TRACE("appData=%p setSimpleSessionTicket => for prev, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
-          sstPrevKeyActive = false;
-        }
-        safeReleaseByteArray(e,nameBytes,prevKeyName);
-        safeReleaseByteArray(e,aesKeyBytes,prevAesKey);
-        safeReleaseByteArray(e,hmacKeyBytes,prevHmacKey);
+        sstPrevKeyActive = true;
+        e->GetByteArrayRegion(prevKeyName,0,16,(jbyte *)sstPrevKeyName);
+        e->GetByteArrayRegion(prevAesKey,0,16,(jbyte *)sstPrevAesKey);
+        e->GetByteArrayRegion(prevHmacKey,0,32,(jbyte *)sstPrevHmacKey);
       }
 
-      if(currentKeyName == nullptr) {
+      if(currentKeyName == nullptr || currentAesKey == nullptr || currentHmacKey == nullptr) {
         sstCurrentKeyActive = false;
       } else {
-        jbyte* nameBytes = e->GetByteArrayElements(currentKeyName, nullptr);
-        jbyte* aesKeyBytes = e->GetByteArrayElements(currentAesKey, nullptr);
-        jbyte* hmacKeyBytes = e->GetByteArrayElements(currentHmacKey, nullptr);
-        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
-          sstCurrentKeyActive = true;
-          memcpy(sstCurrentKeyName,nameBytes,16);
-          memcpy(sstCurrentAesKey,aesKeyBytes,16);
-          memcpy(sstCurrentHmacKey,hmacKeyBytes,32);
-        } else {
-          JNI_TRACE("appData=%p setSimpleSessionTicket => for current, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
-          sstCurrentKeyActive = false;
-        }
-        safeReleaseByteArray(e,nameBytes,currentKeyName);
-        safeReleaseByteArray(e,aesKeyBytes,currentAesKey);
-        safeReleaseByteArray(e,hmacKeyBytes,currentHmacKey);
+        sstCurrentKeyActive = true;
+        e->GetByteArrayRegion(currentKeyName,0,16,(jbyte *)sstCurrentKeyName);
+        e->GetByteArrayRegion(currentAesKey,0,16,(jbyte *)sstCurrentAesKey);
+        e->GetByteArrayRegion(currentHmacKey,0,32,(jbyte *)sstCurrentHmacKey);
       }
 
-      if(nextKeyName == nullptr) {
+      if(nextKeyName == nullptr || nextAesKey == nullptr || nextHmacKey == nullptr) {
         sstNextKeyActive = false;
       } else {
-        jbyte* nameBytes = e->GetByteArrayElements(nextKeyName, nullptr);
-        jbyte* aesKeyBytes = e->GetByteArrayElements(nextAesKey, nullptr);
-        jbyte* hmacKeyBytes = e->GetByteArrayElements(nextHmacKey, nullptr);
-        if(nameBytes != nullptr && aesKeyBytes != nullptr && hmacKeyBytes != nullptr) {
-          sstNextKeyActive = true;
-          memcpy(sstNextKeyName,nameBytes,16);
-          memcpy(sstNextAesKey,aesKeyBytes,16);
-          memcpy(sstNextHmacKey,hmacKeyBytes,32);
-        } else {
-          JNI_TRACE("appData=%p setSimpleSessionTicket => for next, nameBytes aesKeyBytes or hmacKeyBytes == null", this);
-          sstNextKeyActive = false;
-        }
-        safeReleaseByteArray(e,nameBytes,nextKeyName);
-        safeReleaseByteArray(e,aesKeyBytes,nextAesKey);
-        safeReleaseByteArray(e,hmacKeyBytes,nextHmacKey);
+        sstNextKeyActive = true;
+        e->GetByteArrayRegion(nextKeyName,0,16,(jbyte *)sstNextKeyName);
+        e->GetByteArrayRegion(nextAesKey,0,16,(jbyte *)sstNextAesKey);
+        e->GetByteArrayRegion(nextHmacKey,0,32,(jbyte *)sstNextHmacKey);
       }
 
     }
@@ -339,12 +306,6 @@ class AppData {
 #endif
     }
 
-    // simplesessionticket
-    void safeReleaseByteArray(JNIEnv *e,jbyte *arr,jbyteArray javaArr) {
-      if(arr != nullptr)
-        e->ReleaseByteArrayElements(javaArr,arr,JNI_ABORT);
-    }
-    
     void clearApplicationProtocols() {
         if (applicationProtocolsData != nullptr) {
             delete applicationProtocolsData;
