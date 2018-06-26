@@ -7690,10 +7690,6 @@ static void NativeCrypto_setApplicationProtocolSelector(JNIEnv* env, jclass, jlo
 
 /** simple session ticket support -- allow 3 keys (previous, current, next) **/
 // simplesessionticket
-static bool sst_keyname_matches(unsigned char *key1,unsigned char *key2) {
-    return memcmp(key1,key2,16) == 0;
-}
-// simplesessionticket
 static int sst_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
 {
     AppData* appData = toAppData(s);
