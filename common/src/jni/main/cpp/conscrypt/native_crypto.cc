@@ -7740,7 +7740,17 @@ static int sst_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned
 
     }
 }
-         
+
+// simplesessionticket
+static bool NativeCrypto_SSL_cache_hit(JNIEnv* env, jclass, jlong ssl_address,CONSCRYPT_UNUSED jobject ssl_holder) {
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    SSL* ssl = to_SSL(env, ssl_address, true);
+    if (ssl == nullptr) {
+        return false;
+    }
+    return SSL_cache_hit(ssl);
+}
+
 // simplesessionticket
 static void NativeCrypto_SSL_set_simple_session_ticket(JNIEnv* env, jclass, jlong ssl_address,CONSCRYPT_UNUSED jobject ssl_holder,
                                 jbyteArray prevKeyName,jbyteArray prevAesKey,jbyteArray prevHmacKey,
@@ -10246,6 +10256,7 @@ static JNINativeMethod sNativeCryptoMethods[] = {
         CONSCRYPT_NATIVE_METHOD(SSL_get_token_binding_params, "(J" REF_SSL ")I"),
         CONSCRYPT_NATIVE_METHOD(SSL_export_keying_material, "(J" REF_SSL "[B[BI)[B"),
         CONSCRYPT_NATIVE_METHOD(SSL_set_simple_session_ticket, "(J" REF_SSL "[B[B[B[B[B[B[B[B[B)V"), // simplesessionticket
+        CONSCRYPT_NATIVE_METHOD(SSL_cache_hit, "(J" REF_SSL ")Z"), // simplesessionticket
         CONSCRYPT_NATIVE_METHOD(SSL_use_psk_identity_hint, "(J" REF_SSL "Ljava/lang/String;)V"),
         CONSCRYPT_NATIVE_METHOD(set_SSL_psk_client_callback_enabled, "(J" REF_SSL "Z)V"),
         CONSCRYPT_NATIVE_METHOD(set_SSL_psk_server_callback_enabled, "(J" REF_SSL "Z)V"),

@@ -641,7 +641,11 @@ final class NativeSsl {
             NativeCrypto.BIO_free_all(toFree);
         }
     }
-
+    // simplesessionticket
+    boolean cacheHit() {
+        return NativeCrypto.SSL_cache_hit(ssl, this);
+    }
+    
     // simplesessionticket
     void setSimpleSessionTicket(
                                 byte[] prevKeyName,byte[] prevAesKey,byte[] prevHmacKey,

@@ -1208,4 +1208,9 @@ class ConscryptFileDescriptorSocket extends OpenSSLSocketImpl
                                    next!=null?next.keyName:null, next!=null?next.aesKey:null, next!=null?next.hmacKey:null
                                    );
     }
+    // simplesessionticket
+    @Override
+    boolean cacheHit() {
+        return ssl.cacheHit();
+    }
 }

@@ -662,6 +662,12 @@ public final class Conscrypt {
     public static void setSimpleSessionTicket(SSLSocket socket, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
         toConscrypt(socket).setSimpleSessionTicket(prev,curr,next);
     }
+
+    // simplesessionticket
+    public static boolean cacheHit(SSLSocket socket) {
+        return toConscrypt(socket).cacheHit();
+    }
+
     
     /**
      * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
@@ -676,5 +682,8 @@ public final class Conscrypt {
     public static void setSimpleSessionTicket(SSLEngine engine, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
         toConscrypt(engine).setSimpleSessionTicket(prev,curr,next);
     }
-
+    // simplesessionticket
+    public static boolean cacheHit(SSLEngine engine) {
+        return toConscrypt(engine).cacheHit();
+    }
 }

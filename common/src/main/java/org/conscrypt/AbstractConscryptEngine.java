@@ -212,4 +212,7 @@ abstract class AbstractConscryptEngine extends SSLEngine {
      */
     // simplesessionticket
     abstract void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next);
+
+    // simplesessionticket
+    abstract boolean cacheHit();
 }

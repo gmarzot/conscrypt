@@ -815,4 +815,11 @@ class ConscryptEngineSocket extends OpenSSLSocketImpl {
     void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
         engine.setSimpleSessionTicket(prev,curr,next);
     }
+
+        // simplesessionticket
+    @Override
+    boolean cacheHit() {
+        return engine.cacheHit();
+    }
+
 }

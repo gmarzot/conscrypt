@@ -915,6 +915,9 @@ public final class NativeCrypto {
     static native byte[] SSL_export_keying_material(long ssl, NativeSsl ssl_holder, byte[] label, byte[] context, int num_bytes) throws SSLException;
 
     // simplesessionticket
+    static native boolean SSL_cache_hit(long ssl, NativeSsl ssl_holder);
+    
+    // simplesessionticket
     static native void SSL_set_simple_session_ticket(long ssl, NativeSsl ssl_holder,
                                                         byte[] prevKeyName,byte[] prevAesKey,byte[] prevHmacKey,
                                                         byte[] currKeyName,byte[] currAesKey,byte[] currHmacKey,

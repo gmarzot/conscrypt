@@ -356,4 +356,11 @@ final class Java8EngineWrapper extends AbstractConscryptEngine {
         delegate.setSimpleSessionTicket(prev,curr,next);
     }
 
+    // simplesessionticket
+    @Override
+    boolean cacheHit() {
+        return delegate.cacheHit();
+    }
+
+
 }
