@@ -678,4 +678,22 @@ final class NativeSsl {
             NativeCrypto.BIO_free_all(toFree);
         }
     }
+    // simplesessionticket
+    boolean cacheHit() {
+        return NativeCrypto.SSL_cache_hit(ssl, this);
+    }
+    
+    // simplesessionticket
+    void setSimpleSessionTicket(
+                                byte[] prevKeyName,byte[] prevAesKey,byte[] prevHmacKey,
+                                byte[] currKeyName,byte[] currAesKey,byte[] currHmacKey,
+                                byte[] nextKeyName,byte[] nextAesKey,byte[] nextHmacKey
+                                ) {
+        NativeCrypto.SSL_set_simple_session_ticket(ssl, this,
+                                                   prevKeyName,prevAesKey,prevHmacKey,
+                                                   currKeyName,currAesKey,currHmacKey,
+                                                   nextKeyName,nextAesKey,nextHmacKey
+                                                   );
+    }
+
 }

@@ -7700,6 +7700,101 @@ static void NativeCrypto_setHasApplicationProtocolSelector(JNIEnv* env, jclass, 
     }
 }
 
+
+/** simple session ticket support -- allow 3 keys (previous, current, next) **/
+// simplesessionticket
+static int sst_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+{
+    AppData* appData = toAppData(s);
+    if (appData == nullptr) {
+        JNI_TRACE("ssl=%p sst_tlsext_ticket_key_cb appData => 0", s);
+        return -1;
+    }
+
+    if (enc) { /* create new session */
+        if (RAND_bytes(iv,EVP_MAX_IV_LENGTH) <= 0) {
+            return -1; /* insufficient random */
+        }
+
+        if ( !appData->sskCurrent->active) {
+            return 0;
+        }
+        memcpy(key_name, appData->sskCurrent->keyName, 16);
+
+        EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, appData->sskCurrent->aesKey, iv);
+        HMAC_Init_ex(hctx, appData->sskCurrent->hmacKey, 32, EVP_sha256(), NULL);
+
+        return 1;
+
+    } else { /* retrieve session */
+        AppData::SimpleSessionKey *ssk = nullptr;
+        bool expired = false;
+
+        if(appData->sskCurrent->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskCurrent;
+        } else if(appData->sskNext->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskNext;
+        } else if(appData->sskPrevious->matchesKeyAndActive(key_name)) {
+            ssk = appData->sskPrevious;
+            expired = true;
+        }
+
+        if  (ssk == nullptr) // no match
+            return 0;
+
+        EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, ssk->aesKey, iv );
+        HMAC_Init_ex(hctx, ssk->hmacKey, 32, EVP_sha256(), NULL);
+
+        if (expired) {
+            /* return 2 - this session will get a new ticket even though the current is still valid */
+            return 2;
+        }
+        return 1;
+
+    }
+}
+
+// simplesessionticket
+static bool NativeCrypto_SSL_cache_hit(JNIEnv* env, jclass, jlong ssl_address,CONSCRYPT_UNUSED jobject ssl_holder) {
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    SSL* ssl = to_SSL(env, ssl_address, true);
+    if (ssl == nullptr) {
+        return false;
+    }
+    return SSL_cache_hit(ssl);
+}
+
+// simplesessionticket
+static void NativeCrypto_SSL_set_simple_session_ticket(JNIEnv* env, jclass, jlong ssl_address,CONSCRYPT_UNUSED jobject ssl_holder,
+                                jbyteArray prevKeyName,jbyteArray prevAesKey,jbyteArray prevHmacKey,
+                                jbyteArray currentKeyName,jbyteArray currentAesKey,jbyteArray currentHmacKey,
+                                jbyteArray nextKeyName,jbyteArray nextAesKey,jbyteArray nextHmacKey
+                                                ) {
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    SSL* ssl = to_SSL(env, ssl_address, true);
+    if (ssl == nullptr) {
+        return;
+    }
+    AppData* appData = toAppData(ssl);
+    if (appData == nullptr) {
+        conscrypt::jniutil::throwSSLExceptionStr(env, "Unable to retrieve application data");
+        JNI_TRACE("ssl=%p NativeCrypto_setSimpleSessionTicket appData => 0", ssl);
+        return;
+    }
+
+    // all 3 null means don't use simplesessiontickets.  Use built-in OpenSSL session tickets instead.
+    if(prevKeyName == nullptr && currentKeyName == nullptr && nextKeyName == nullptr) {
+        SSL_CTX_set_tlsext_ticket_key_cb(SSL_get_SSL_CTX(ssl), nullptr);
+        return;
+    }
+    appData->sskPrevious->set(env,prevKeyName,prevAesKey,prevHmacKey);
+    appData->sskCurrent->set(env,currentKeyName,currentAesKey,currentHmacKey);
+    appData->sskNext->set(env,nextKeyName,nextAesKey,nextHmacKey);
+    
+    SSL_CTX_set_tlsext_ticket_key_cb(SSL_get_SSL_CTX(ssl), sst_tlsext_ticket_key_cb);
+}
+
+
 /**
  * Perform SSL handshake
  */
@@ -10180,6 +10275,8 @@ static JNINativeMethod sNativeCryptoMethods[] = {
         CONSCRYPT_NATIVE_METHOD(SSL_set_ocsp_response, "(J" REF_SSL "[B)V"),
         CONSCRYPT_NATIVE_METHOD(SSL_get_tls_unique, "(J" REF_SSL ")[B"),
         CONSCRYPT_NATIVE_METHOD(SSL_export_keying_material, "(J" REF_SSL "[B[BI)[B"),
+        CONSCRYPT_NATIVE_METHOD(SSL_set_simple_session_ticket, "(J" REF_SSL "[B[B[B[B[B[B[B[B[B)V"), // simplesessionticket
+        CONSCRYPT_NATIVE_METHOD(SSL_cache_hit, "(J" REF_SSL ")Z"), // simplesessionticket
         CONSCRYPT_NATIVE_METHOD(SSL_use_psk_identity_hint, "(J" REF_SSL "Ljava/lang/String;)V"),
         CONSCRYPT_NATIVE_METHOD(set_SSL_psk_client_callback_enabled, "(J" REF_SSL "Z)V"),
         CONSCRYPT_NATIVE_METHOD(set_SSL_psk_server_callback_enabled, "(J" REF_SSL "Z)V"),

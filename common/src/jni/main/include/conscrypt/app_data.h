@@ -118,6 +118,37 @@ class AppData {
     size_t applicationProtocolsLength;
     bool hasApplicationProtocolSelector;
 
+    // simplesessionticket
+    class SimpleSessionKey {
+      
+    public:
+      bool active;
+      unsigned char keyName[16];
+      unsigned char aesKey[16];
+      unsigned char hmacKey[32];
+
+      SimpleSessionKey()
+        : active(false) {
+      }
+
+      bool matchesKeyAndActive(unsigned char *candidate) {
+        return active && memcmp(candidate,keyName,16) == 0;
+      }
+
+      void set(JNIEnv *e,jbyteArray keyName,jbyteArray aesKey,jbyteArray hmacKey) {
+        if(keyName == nullptr || aesKey == nullptr || hmacKey == nullptr) {
+          active = false;
+        } else {
+          active = true;
+          e->GetByteArrayRegion(keyName,0,16,(jbyte *)this->keyName);
+          e->GetByteArrayRegion(aesKey,0,16,(jbyte *)this->aesKey);
+          e->GetByteArrayRegion(hmacKey,0,32,(jbyte *)this->hmacKey);
+        }
+      }
+    };
+
+    SimpleSessionKey *sskPrevious,*sskCurrent,*sskNext;
+    
     /**
      * Creates the application data context for the SSL*.
      */
@@ -159,8 +190,14 @@ class AppData {
 #endif
         clearApplicationProtocols();
         clearCallbackState();
+
+        // simplesessionticket
+        delete sskPrevious;
+        delete sskCurrent;
+        delete sskNext;
     }
 
+    
     /**
      * Only called in server mode. Sets the protocols for ALPN negotiation.
      *
@@ -217,7 +254,7 @@ class AppData {
         sslHandshakeCallbacks = nullptr;
         env = nullptr;
     }
-
+    
  private:
     AppData()
         : aliveAndKicking(true),
@@ -233,6 +270,9 @@ class AppData {
         fdsEmergency[0] = -1;
         fdsEmergency[1] = -1;
 #endif
+        sskPrevious = new SimpleSessionKey();
+        sskCurrent = new SimpleSessionKey();
+        sskNext = new SimpleSessionKey();
     }
 
     void clearApplicationProtocols() {

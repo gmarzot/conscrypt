@@ -29,6 +29,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * A wrapper around {@link ConscryptEngine} that adapts to the new Java 9 (and potentially later
@@ -338,4 +339,18 @@ final class Java8EngineWrapper extends AbstractConscryptEngine {
             }
         };
     }
+
+    // simplesessionticket
+    @Override
+    void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        delegate.setSimpleSessionTicket(prev,curr,next);
+    }
+
+    // simplesessionticket
+    @Override
+    boolean cacheHit() {
+        return delegate.cacheHit();
+    }
+
+
 }

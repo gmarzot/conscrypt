@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * Core API for creating and configuring all Conscrypt types.
@@ -777,5 +778,42 @@ public final class Conscrypt {
         return toConscrypt(trustManager).getHostnameVerifier();
     }
 
+   /** 
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param the engine being configured
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    public static void setSimpleSessionTicket(SSLSocket socket, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        toConscrypt(socket).setSimpleSessionTicket(prev,curr,next);
+    }
+
+    // simplesessionticket
+    public static boolean cacheHit(SSLSocket socket) {
+        return toConscrypt(socket).cacheHit();
+    }
+
+    
+    /**
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param the engine being configured
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    public static void setSimpleSessionTicket(SSLEngine engine, SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next) {
+        toConscrypt(engine).setSimpleSessionTicket(prev,curr,next);
+    }
+    // simplesessionticket
+    public static boolean cacheHit(SSLEngine engine) {
+        return toConscrypt(engine).cacheHit();
+    }
 
 }

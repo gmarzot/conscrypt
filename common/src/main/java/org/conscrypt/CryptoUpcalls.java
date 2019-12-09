@@ -40,13 +40,17 @@ final class CryptoUpcalls {
 
     private CryptoUpcalls() {}
 
+    private static boolean isOurProvider(Provider p) {
+        return p.getClass().getPackage().equals(CryptoUpcalls.class.getPackage());
+    }
+
     /**
      * Finds providers that are not us that provide the requested algorithms.
      */
     private static ArrayList<Provider> getExternalProviders(String algorithm) {
         ArrayList<Provider> providers = new ArrayList<Provider>(1);
         for (Provider p : Security.getProviders(algorithm)) {
-            if (!Conscrypt.isConscrypt(p)) {
+            if (!isOurProvider(p)) {
                 providers.add(p);
             }
         }
@@ -72,14 +76,14 @@ final class CryptoUpcalls {
         Signature signature;
 
         // Since this is a delegated key, we cannot handle providing a signature using this key.
-        // Otherwise we wouldn't end up in this class in the first place. The first step is to
+        // Otherwise we wouldn't end up in this classs in the first place. The first step is to
         // try to get the most preferred provider as long as it isn't us.
         try {
             signature = Signature.getInstance(algorithm);
             signature.initSign(javaKey);
 
             // Ignore it if it points back to us.
-            if (Conscrypt.isConscrypt(signature.getProvider())) {
+            if (isOurProvider(signature.getProvider())) {
                 signature = null;
             }
         } catch (NoSuchAlgorithmException e) {
@@ -172,14 +176,14 @@ final class CryptoUpcalls {
         Cipher c = null;
 
         // Since this is a delegated key, we cannot handle providing a cipher using this key.
-        // Otherwise we wouldn't end up in this class in the first place. The first step is to
+        // Otherwise we wouldn't end up in this classs in the first place. The first step is to
         // try to get the most preferred provider as long as it isn't us.
         try {
             c = Cipher.getInstance(transformation);
             c.init(cipherMode, javaKey);
 
             // Ignore it if it points back to us.
-            if (Conscrypt.isConscrypt(c.getProvider())) {
+            if (isOurProvider(c.getProvider())) {
                 c = null;
             }
         } catch (NoSuchAlgorithmException e) {

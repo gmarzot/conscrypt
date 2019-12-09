@@ -37,6 +37,7 @@ import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
+import org.conscrypt.SimpleSessionTicket;
 
 /**
  * Abstract base class for all Conscrypt {@link SSLSocket} classes.
@@ -754,4 +755,18 @@ abstract class AbstractConscryptSocket extends SSLSocket {
      */
     abstract byte[] exportKeyingMaterial(String label, byte[] context, int length)
             throws SSLException;
+
+    /** 
+     * Activates and configures keys for simple session ticket scheme. Note that useSessionTickets must
+     *   also be in-effect for tickets to actually be issued.
+     *
+     * @param pre
+     * @param curr
+     * @param next
+     */
+    // simplesessionticket
+    abstract void setSimpleSessionTicket(SimpleSessionTicket prev, SimpleSessionTicket curr, SimpleSessionTicket next);
+
+    // simplesessionticket
+    abstract boolean cacheHit();
 }
