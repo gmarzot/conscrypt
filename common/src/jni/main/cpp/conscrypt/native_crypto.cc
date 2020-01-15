@@ -5930,6 +5930,7 @@ static int sslSelect(JNIEnv* env, int type, jobject fdObject, AppData* appData,
         if (WSAEventSelect(fd.get(), events[1], (type == SSL_ERROR_WANT_READ ? FD_READ : FD_WRITE) |
                                                         FD_CLOSE) == SOCKET_ERROR) {
             JNI_TRACE("sslSelect failure in WSAEventSelect: %d", WSAGetLastError());
+            WSACloseEvent(events[1]);
             break;
         }
 
@@ -5947,6 +5948,7 @@ static int sslSelect(JNIEnv* env, int type, jobject fdObject, AppData* appData,
         } else {
             result = 1;
         }
+        WSACloseEvent(events[1]);
     } while (0);
 
     JNI_TRACE("sslSelect type=%s fd=%d appData=%p timeout_millis=%d => %d",
